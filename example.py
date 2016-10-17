@@ -65,7 +65,7 @@ def gui_example():
     app = QApplication.instance() or QApplication(sys.argv)
     gv = GameViewer()
     gv.show()
-    gv.set_game_generator(game_repeater(EXAMPLE_MAZE * (3, 3), RandomGoody, RandomGoody, RandomBaddy))
+    gv.set_game_generator(game_repeater(EXAMPLE_MAZE * (3, 3), OurGoody, RandomGoody, RandomBaddy))
     app.exec_()
 
 if __name__ == "__main__":

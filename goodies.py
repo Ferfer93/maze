@@ -40,8 +40,30 @@ class OurGoody(Goody):
         self.last_G_pos = None
         self.last_BG_pos = None
         self.initialized = True
+        self.knownmat = np.zeros((100,100))
+        self.curr_pos = (0,0)
+        self.steps_staying = 0
+        self.rec_list = []
 
     def take_turn(self, obstruction, _ping_response):
+        
+        #Include obstructions
+        if obstruction[UP]:
+            self.knownmat[self.curr_pos[0]][self.curr_pos[1]+1] = 1
+        else:
+            self.knownmat[self.curr_pos[0]][self.curr_pos[1]+1] = -1
+        if obstruction[DOWN]:
+            self.knownmat[self.curr_pos[0]][self.curr_pos[1]-1] = 1
+        else:
+            self.knownmat[self.curr_pos[0]][self.curr_pos[1]-1] = -1
+        if obstruction[RIGHT]:
+            self.knownmat[self.curr_pos[0]+1][self.curr_pos[1]] = 1
+        else:
+            self.knownmat[self.curr_pos[0]+1][self.curr_pos[1]] = -1
+        if obstruction[LEFT]:
+            self.knownmat[self.curr_pos[0]-1][self.curr_pos[1]] = 1
+        else:
+            self.knownmat[self.curr_pos[0]-1][self.curr_pos[1]] = -1
         
         if self.initialized:
             self.initialized = False
@@ -68,8 +90,11 @@ class OurGoody(Goody):
         if self.next_ping == 0:
             return PING
                     
-        if self.last_B_pos.x**2 + self.last_B_pos.y**2 > self.last_G_pos.x**2 + self.last_G_pos.y**2 or 1==1:
+        if self.last_B_pos.x**2 + self.last_B_pos.y**2 > self.last_G_pos.x**2 + self.last_G_pos.y**2 or 1 == 1:
             direction = self.s_chase(obstruction)
+            self.curr_pos += direction
+            if vector_to_direction(direction) == STAY:
+                self.steps_staying += 1
             return vector_to_direction(direction)
         else:
             direction = self.strategy(obstruction)
@@ -183,6 +208,19 @@ class OurGoody(Goody):
                 return np.array((0,0))
         else:
             return np.array((0,0))
+        
+        
+    def rec_list(self):
+        if len(self.rec_list) != 0:
+            return self.rec_list.pop(0)
+        else:
+            self.rec_list = []
+            prod_list(self.knownmat,self.rec_list,self.curr_pos,self.knownmat)
+        
+def prod_list(mat,moves,position,pathmat):
+    ##do nothing
+    return None
+    
                
 def direction_to_vector(direction):
     return {UP: np.array((0,1)),
