@@ -13,7 +13,7 @@ import numpy as np
 
 from math import sqrt
 
-from maze import Goody, Baddy, UP, DOWN, LEFT, RIGHT, STAY, PING
+from maze import Goody, Baddy, UP, DOWN, LEFT, RIGHT, STAY, PING, ZERO, Position
 
 class StaticGoody(Goody):
     ''' A static goody - does not move from its initial position '''
@@ -31,7 +31,8 @@ class RandomGoody(Goody):
         return random.choice(possibilities)
 
 class OurGoody(Goody):
-    ''' A goody that pings every other turn and runs away from the badguy '''
+    ''' A goody that tries to chase the 2nd goody, intercalating random movements
+        as a way to avoid dead ends, and avoids the baddy when it's too close'''
 
     def __init__(self):
         self.last_ping_response = None
@@ -50,36 +51,9 @@ class OurGoody(Goody):
 
     def take_turn(self, obstruction, _ping_response):
         
-        #Include obstructions
-        if obstruction[UP]:
-            self.knownmat[self.curr_pos[0]][self.curr_pos[1]+1] = 1
-        else:
-            self.knownmat[self.curr_pos[0]][self.curr_pos[1]+1] = -1
-        if obstruction[DOWN]:
-            self.knownmat[self.curr_pos[0]][self.curr_pos[1]-1] = 1
-        else:
-            self.knownmat[self.curr_pos[0]][self.curr_pos[1]-1] = -1
-        if obstruction[RIGHT]:
-            self.knownmat[self.curr_pos[0]+1][self.curr_pos[1]] = 1
-        else:
-            self.knownmat[self.curr_pos[0]+1][self.curr_pos[1]] = -1
-        if obstruction[LEFT]:
-            self.knownmat[self.curr_pos[0]-1][self.curr_pos[1]] = 1
-        else:
-            self.knownmat[self.curr_pos[0]-1][self.curr_pos[1]] = -1
-        
-        if self.initialized:
+        if self.initialized == True:
             self.initialized = False
             return PING
-        
-        if self.move_randomly and self.last_G_pos.x**2+self.last_G_pos.y**2 > 9:
-            if self.steps_random > 0:
-                self.steps_random -= 1
-                #print 'hola'
-                possibilities = filter(lambda direction: not obstruction[direction], [UP, DOWN, LEFT, RIGHT]) + [PING]
-                return random.choice(possibilities)
-            else:
-                self.move_randomly = False
         
         if _ping_response is not None:
             self.last_ping_response = _ping_response
@@ -94,34 +68,42 @@ class OurGoody(Goody):
                     posG = self.last_ping_response[player]
                     self.last_G_pos = self.last_ping_response[player]
             #print posB
-            self.next_ping = min([1,int(0.5*sqrt(posB.x**2+posB.y**2)),int(0.5*sqrt(posG.x**2+posG.y**2))])
+            self.next_ping = max([2,min([int(0.5*sqrt(posB.x**2+posB.y**2)),int(0.5*sqrt(posG.x**2+posG.y**2))])])
             self.last_BG_pos = posB - posG
+            
+        if self.last_G_pos.x == 1:
+            return RIGHT
+        elif self.last_G_pos.x == -1:
+            return LEFT
+        elif self.last_G_pos.y == 1:
+            return UP
+        elif self.last_G_pos.y == -1:
+            return DOWN
+                    
+        if self.next_ping == 0:
+            #self.next_ping = 10
+            return PING
         else:
             self.next_ping -= 1
                     
-        if self.next_ping == 0:
-            return PING
-                    
+        if self.move_randomly:
+            if self.steps_random > 0:
+                self.steps_random -= 1
+                #print 'hola'
+                possibilities = filter(lambda direction: not obstruction[direction], [UP, DOWN, LEFT, RIGHT]) + [PING]
+                return random.choice(possibilities)
+            else:
+                self.move_randomly = False
+        
         if self.last_B_pos.x**2 + self.last_B_pos.y**2 > 3:
             direction = self.s_chase(obstruction)
             self.curr_pos += direction
-            if self.steps_staying == 0:
-                if self.move_randomly == False:
-                    self.rec_pos = self.curr_pos
-                    self.steps_staying += 1
-            elif self.steps_staying >= 20 and (self.curr_pos[0]-self.rec_pos[0])**2+(self.curr_pos[1]-self.rec_pos[1])**2 <= 1:
-                self.move_randomly = True
-                self.steps_random = 20
-                self.steps_staying = 0
-            elif self.steps_staying < 20:
-                self.steps_staying += 1
-            else:
-                self.steps_staying == 0
+            
             return vector_to_direction(direction)
         else:
             possibilities = filter(lambda direction: not obstruction[direction], [UP, DOWN, LEFT, RIGHT])
             possibilities.append(STAY)
-            distances = [distance(move_to_location(possibility), last_B_pos)
+            distances = [distance(move_to_location(possibility), self.last_B_pos)
                           for possibility in possibilities]
             return possibilities[distances.index(max(distances))]
         
@@ -140,38 +122,13 @@ class OurGoody(Goody):
     def update_ping(self, direction):
         if self.last_ping_response is not None:
             self.last_ping_response -= direction_to_vector(direction)
-
-        
-
-    def strategy(self, obstruction):
-        direction = self.get_pos(Baddy);
-        if not direction:
-            return PING
-        else:
-            reduced_directon = np.floor(direction/max(abs(direction)))
-            if obstruction[reduced_direction]:
-                reduced_directon = np.floor(direction/min(abs(direction)))
-                if obstruction[reduced_direction]:
-                    reduced_directon = -np.floor(direction/min(abs(direction)))
-                    if obstruction[reduced_direction]:
-                        reduced_directon = -np.floor(direction/max(abs(direction)))
-                        if obstruction[reduced_direction]:
-                            return STAY
-                        else:
-                            return reduced_direction
-                    else:
-                        return reduced_direction
-                else:
-                    return reduced_direction
-            else:
-                return reduced_direction
             
             
     def s_chase(self, obstruction):
         #chase G only if B is further
         diag_G_x = self.last_G_pos.x + self.last_G_pos.y
         diag_G_y = self.last_G_pos.x - self.last_G_pos.y
-        if diag_G_x > 0 and diag_G_y < 0:
+        if diag_G_x >= 0 and diag_G_y <= 0:
             if not obstruction[UP]:
                 return np.array((0,1))
             else:
@@ -186,7 +143,7 @@ class OurGoody(Goody):
                     elif not obstruction[LEFT]:
                         return np.array((-1,0))
                 return np.array((0,0))
-        elif diag_G_x > 0 and diag_G_y > 0:
+        elif diag_G_x >= 0 and diag_G_y >= 0:
             #G is right
             if not obstruction[RIGHT]:
                 return np.array((1,0))
@@ -202,7 +159,7 @@ class OurGoody(Goody):
                     elif not obstruction[UP]:
                         return np.array((0,1))
                 return np.array((0,0))
-        elif diag_G_x < 0 and diag_G_y > 0:
+        elif diag_G_x <= 0 and diag_G_y >= 0:
             #G is down
             if not obstruction[DOWN]:
                 return np.array((0,-1))
@@ -218,7 +175,7 @@ class OurGoody(Goody):
                     elif not obstruction[LEFT]:
                         return np.array((-1,0))
                 return np.array((0,0))
-        elif diag_G_x < 0 and diag_G_y < 0:
+        elif diag_G_x <= 0 and diag_G_y <= 0:
             #G is left
             if not obstruction[LEFT]:
                 return np.array((-1,0))

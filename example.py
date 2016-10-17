@@ -50,7 +50,7 @@ def stats_example(total_games):
     ''' Plays many games, printing cumulative and final stats '''
 
     results = defaultdict(int)
-    for game_number, game in enumerate(game_repeater(EXAMPLE_MAZE, RandomGoody, RandomGoody, RandomBaddy)):
+    for game_number, game in enumerate(game_repeater(EXAMPLE_MAZE, OurGoody, RandomGoody, RandomBaddy)):
         if game_number == total_games:
             break
         result, _rounds = game.play()
@@ -65,11 +65,11 @@ def gui_example():
     app = QApplication.instance() or QApplication(sys.argv)
     gv = GameViewer()
     gv.show()
-    gv.set_game_generator(game_repeater(EXAMPLE_MAZE * (3, 3), OurGoody, RandomGoody, RandomBaddy))
+    gv.set_game_generator(game_repeater(EXAMPLE_MAZE * (3, 3), OurGoody, OurGoody, RandomBaddy))
     app.exec_()
 
 if __name__ == "__main__":
     # Uncomment whichever example you want to run
     #text_example()
-    #stats_example(1000)
-    gui_example()
+    stats_example(1000)
+    #gui_example()
