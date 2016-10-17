@@ -68,12 +68,13 @@ class OurGoody(Goody):
         if self.next_ping == 0:
             return PING
                     
-        if posB.x**2 + posB.y**2 > posG.x**2 + posG.y**2 or 1==1:
+        if self.last_B_pos.x**2 + self.last_B_pos.y**2 > self.last_G_pos.x**2 + self.last_G_pos.y**2 or 1==1:
             direction = self.s_chase(obstruction)
+            return vector_to_direction(direction)
         else:
             direction = self.strategy(obstruction)
-        self.update_ping(direction)
-        return direction
+            #self.update_ping(direction)
+            return direction
 
     def get_pos(self, target):
             if self.last_ping_response is None:
@@ -180,6 +181,8 @@ class OurGoody(Goody):
                     elif not obstruction[UP]:
                         return np.array((1,0))
                 return np.array((0,0))
+        else:
+            return np.array((0,0))
                
 def direction_to_vector(direction):
     return {UP: np.array((0,1)),
