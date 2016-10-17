@@ -72,10 +72,10 @@ class OurGoody(Goody):
             self.initialized = False
             return PING
         
-        if self.move_randomly:
+        if self.move_randomly and self.last_G_pos.x**2+self.last_G_pos.y**2 > 9:
             if self.steps_random > 0:
                 self.steps_random -= 1
-                print 'hola'
+                #print 'hola'
                 possibilities = filter(lambda direction: not obstruction[direction], [UP, DOWN, LEFT, RIGHT]) + [PING]
                 return random.choice(possibilities)
             else:
@@ -93,8 +93,8 @@ class OurGoody(Goody):
                 else:
                     posG = self.last_ping_response[player]
                     self.last_G_pos = self.last_ping_response[player]
-            print posB
-            self.next_ping = min([int(0.5*sqrt(posB.x**2+posB.y**2)),int(0.5*sqrt(posG.x**2+posG.y**2))])
+            #print posB
+            self.next_ping = min([1,int(0.5*sqrt(posB.x**2+posB.y**2)),int(0.5*sqrt(posG.x**2+posG.y**2))])
             self.last_BG_pos = posB - posG
         else:
             self.next_ping -= 1
@@ -102,7 +102,7 @@ class OurGoody(Goody):
         if self.next_ping == 0:
             return PING
                     
-        if self.last_B_pos.x**2 + self.last_B_pos.y**2 > self.last_G_pos.x**2 + self.last_G_pos.y**2 or 1 == 1:
+        if self.last_B_pos.x**2 + self.last_B_pos.y**2 > 3:
             direction = self.s_chase(obstruction)
             self.curr_pos += direction
             if self.steps_staying == 0:
@@ -119,6 +119,12 @@ class OurGoody(Goody):
                 self.steps_staying == 0
             return vector_to_direction(direction)
         else:
+            possibilities = filter(lambda direction: not obstruction[direction], [UP, DOWN, LEFT, RIGHT])
+            possibilities.append(STAY)
+            distances = [distance(move_to_location(possibility), last_B_pos)
+                          for possibility in possibilities]
+            return possibilities[distances.index(max(distances))]
+        
             direction = self.strategy(obstruction)
             #self.update_ping(direction)
             return direction
@@ -268,3 +274,17 @@ def vector_to_direction(vector):
     else:
         return STAY
         raise ValueError('The vector must be a unit vector')
+    
+def distance(position1, position2):
+    ''' Find distance between two points '''
+    return (abs(position1.x - position2.x) +  abs(position1.y - position2.y))
+
+def move_to_location(move):
+    ''' This maps a 'move' label to an x and y increment. '''
+    mapper = {
+        STAY  : ZERO,
+        LEFT  : Position(-1, 0),
+        RIGHT : Position(1, 0),
+        UP    : Position(0, 1),
+        DOWN  : Position(0, -1)}
+    return mapper[move]
