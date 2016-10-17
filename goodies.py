@@ -51,7 +51,7 @@ class SimplePingEvadeGoody(Goody):
 
     def update_ping(self, direction):
         if self.last_ping_response is not None:
-            self.last_ping_response += direction_to_vector(direction)
+            self.last_ping_response -= direction_to_vector(direction)
 
         
 
