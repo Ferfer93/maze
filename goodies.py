@@ -44,6 +44,9 @@ class OurGoody(Goody):
         self.curr_pos = (0,0)
         self.steps_staying = 0
         self.rec_list = []
+        self.move_randomly = False
+        self.steps_random = 10
+        self.rec_pos = (0,0)
 
     def take_turn(self, obstruction, _ping_response):
         
@@ -69,6 +72,15 @@ class OurGoody(Goody):
             self.initialized = False
             return PING
         
+        if self.move_randomly:
+            if self.steps_random > 0:
+                self.steps_random -= 1
+                print 'hola'
+                possibilities = filter(lambda direction: not obstruction[direction], [UP, DOWN, LEFT, RIGHT]) + [PING]
+                return random.choice(possibilities)
+            else:
+                self.move_randomly = False
+        
         if _ping_response is not None:
             self.last_ping_response = _ping_response
             self.turns_since_ping = 0
@@ -93,8 +105,18 @@ class OurGoody(Goody):
         if self.last_B_pos.x**2 + self.last_B_pos.y**2 > self.last_G_pos.x**2 + self.last_G_pos.y**2 or 1 == 1:
             direction = self.s_chase(obstruction)
             self.curr_pos += direction
-            if vector_to_direction(direction) == STAY:
+            if self.steps_staying == 0:
+                if self.move_randomly == False:
+                    self.rec_pos = self.curr_pos
+                    self.steps_staying += 1
+            elif self.steps_staying >= 20 and (self.curr_pos[0]-self.rec_pos[0])**2+(self.curr_pos[1]-self.rec_pos[1])**2 <= 1:
+                self.move_randomly = True
+                self.steps_random = 20
+                self.steps_staying = 0
+            elif self.steps_staying < 20:
                 self.steps_staying += 1
+            else:
+                self.steps_staying == 0
             return vector_to_direction(direction)
         else:
             direction = self.strategy(obstruction)
@@ -215,9 +237,9 @@ class OurGoody(Goody):
             return self.rec_list.pop(0)
         else:
             self.rec_list = []
-            prod_list(self.knownmat,self.rec_list,self.curr_pos,self.knownmat)
+            prod_list(self.knownmat,self.rec_list,self.curr_pos,self.knownmat,self.last_G_pos)
         
-def prod_list(mat,moves,position,pathmat):
+def prod_list(mat,moves,position,pathmat,goal):
     ##do nothing
     return None
     
