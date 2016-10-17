@@ -36,7 +36,26 @@ class SimplePingEvadeGoody(Goody):
 
     def take_turn(self, obstruction, _ping_response):
         if _ping_response is not None:
-            self.last_ping_response
+            self.last_ping_response = _ping_response
+            self.turns_since_ping = 0
+            for player in self.last_ping_response:
+                posB = None
+                posG = None
+                if isinstance(player,Baddy):
+                    posB = self.last_ping_response[player]
+                else:
+                    posG = self.last_ping_response[player]
+                self.next_ping = min([int(0.5*sqrt(posB[0]**2+posB[1]**2)),int(0.5*sqrt(posG[0]**2+posG[1]**2))])
+                self.last_BG_pos = posB - posG
+        else:
+            self.next_ping -= 1
+            for player in self.last_ping_response:
+                if isinstance(player,Goody):
+                    self.last_G_pos = self.last_ping_response[player]
+                else:
+                    self.last_B_pos = self.last_ping_response[player]
+                    
+                    
         direction = self.strategy(obstruction)
         self.update_ping(direction)
         return direction

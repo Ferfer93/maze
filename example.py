@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import QApplication
 from maze import Maze, Game, game_repeater
 from goodies import RandomGoody
 from baddies import RandomBaddy
+from goodies import OurGoody
 from gui import GameViewer
 
 
@@ -33,7 +34,7 @@ EXAMPLE_MAZE = Maze(10, 10, "0001010000"
 def text_example():
     ''' Prints the state of the game to stdout after each round of turns '''
 
-    goody0 = RandomGoody()
+    goody0 = OurGoody()
     goody1 = RandomGoody()
     baddy = RandomBaddy()
 
