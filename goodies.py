@@ -28,13 +28,21 @@ class RandomGoody(Goody):
         possibilities = filter(lambda direction: not obstruction[direction], [UP, DOWN, LEFT, RIGHT]) + [PING]
         return random.choice(possibilities)
 
-class SimplePingEvadeGoody(Goody):
+class OurGoody(Goody):
     ''' A goody that pings every other turn and runs away from the badguy '''
 
     def __init__(self):
         self.last_ping_response = None
+        self.next_ping = 0
+        self.last_B_pos = 0
+        self.last_G_pos = 0
+        self.last_BG_pos = 0
 
     def take_turn(self, obstruction, _ping_response):
+        
+        if self.next_ping == 0:
+            return PING
+        
         if _ping_response is not None:
             self.last_ping_response = _ping_response
             self.turns_since_ping = 0
@@ -55,10 +63,12 @@ class SimplePingEvadeGoody(Goody):
                 else:
                     self.last_B_pos = self.last_ping_response[player]
                     
-                    
-        direction = self.strategy(obstruction)
-        self.update_ping(direction)
-        return direction
+        if posB[0]**2 + posB[1]**2 > posG[0]**2 + posG[1]**2:
+            self.s_chase(obstruction)
+        else:
+            direction = self.strategy(obstruction)
+            self.update_ping(direction)
+            return direction
 
     def get_pos(self, target):
             if self.last_ping_response is None:
@@ -96,6 +106,75 @@ class SimplePingEvadeGoody(Goody):
                     return reduced_direction
             else:
                 return reduced_direction
+            
+            
+    def s_chase(self, obstruction):
+        #chase G only if B is further
+                diag_G_x = last_G_pos[0] + last_G_pos[1]
+                diag_G_y = last_G_pos[0] - last_G_pos[1]
+                if diag_G_x > 0 and diag_G_y < 0:
+                    if not obstruction[UP]:
+                        return UP
+                    else:
+                        if np.randint(0,2) == 0:
+                            if not obstruction[LEFT]:
+                                return LEFT
+                            elif not obstruction[RIGHT]:
+                                return RIGHT
+                        else:
+                            if not obstruction[RIGHT]:
+                                return RIGHT
+                            elif not obstruction[LEFT]:
+                                return LEFT
+                        return STAY
+                elif diag_G_x > 0 and diag_G_y > 0:
+                    #G is right
+                    if not obstruction[RIGHT]:
+                        return RIGHT
+                    else:
+                        if np.randint(0,2) == 0:
+                            if not obstruction[UP]:
+                                return UP
+                            elif not obstruction[DOWN]:
+                                return DOWN
+                        else:
+                            if not obstruction[DOWN]:
+                                return DOWN
+                            elif not obstruction[UP]:
+                                return UP
+                        return STAY
+                elif diag_G_x < 0 and diag_G_y > 0:
+                    #G is down
+                    if not obstruction[DOWN]:
+                        return DOWN
+                    else:
+                        if np.randint(0,2) == 0:
+                            if not obstruction[LEFT]:
+                                return LEFT
+                            elif not obstruction[RIGHT]:
+                                return RIGHT
+                        else:
+                            if not obstruction[RIGHT]:
+                                return RIGHT
+                            elif not obstruction[LEFT]:
+                                return LEFT
+                        return STAY
+                elif diag_G_x < 0 and diag_G_y < 0:
+                    #G is left
+                    if not obstruction[LEFT]:
+                        return LEFT
+                    else:
+                        if np.randint(0,2) == 0:
+                            if not obstruction[UP]:
+                                return UP
+                            elif not obstruction[DOWN]:
+                                return DOWN
+                        else:
+                            if not obstruction[DOWN]:
+                                return DOWN
+                            elif not obstruction[UP]:
+                                return UP
+                        return STAY
                 
 
 def direction_to_vector(direction):
