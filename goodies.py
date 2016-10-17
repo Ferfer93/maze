@@ -68,7 +68,7 @@ class OurGoody(Goody):
                     posG = self.last_ping_response[player]
                     self.last_G_pos = self.last_ping_response[player]
             #print posB
-            #self.next_ping = max([2,min([int(0.5*sqrt(posB.x**2+posB.y**2)),int(0.5*sqrt(posG.x**2+posG.y**2))])])
+            self.next_ping = max([2,min([int(0.5*sqrt(posB.x**2+posB.y**2)),int(0.5*sqrt(posG.x**2+posG.y**2))])])
             self.last_BG_pos = posB - posG
             
         '''if self.last_G_pos.x == 1:
@@ -106,9 +106,9 @@ class OurGoody(Goody):
                 self.steps_staying += 1
             if self.steps_staying == 10:
                 #print 'asdf'
-                if abs(self.curr_pos[0]-self.rec_pos[0])+abs(self.curr_pos[1]-self.rec_pos[1]) < 10:
+                if abs(self.curr_pos[0]-self.rec_pos[0])+abs(self.curr_pos[1]-self.rec_pos[1]) < 5:
                     self.move_randomly = True
-                    self.steps_random = 10
+                    self.steps_random = 5
                     self.steps_staying = 0
             #print 'asdf'
             return vector_to_direction(direction)
